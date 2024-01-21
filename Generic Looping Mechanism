@@ -1,0 +1,64 @@
+    .macro print_str (%str)
+    .data
+myLabel: .asciiz %str # Declare a string constant
+	.text
+	li $v0, 4 # Set the syscall number for printing a string
+	la $a0, myLabel # Load the adress of the string to be printed into $a0
+	syscall # Print the string
+	.end_macro # End the macro
+	
+	#print_str ("Here is the output:")
+	
+
+     .macro print_int (%x)
+     .data
+	space:     .asciiz     " "	#create the space charcter
+	.text
+	li $v0, 1 # Set the syscall number for printing an integer
+	add $a0, $zero, %x # Move the interger value to be printed into $a0
+	syscall # Print the interger
+	#prints space
+	li $v0, 4 # Set the syscall number for printing a string
+	la $a0, space # Load the address of the space character into $a0
+	syscall # Print the space character
+	.end_macro # End the macro
+	
+
+# generic looping mechanism
+	.macro for (%regIterator, %from, %to, %increment, %interval, %bodyMacroName)
+		print_str ("Here is the output:")
+	li $t1 , 'i'   #loading i into a register
+	li $t2, 'd'     #loading d into a register
+	
+	add %regIterator, $zero, %from    # Initialize %regIterator to %from
+	
+	Loop:
+	beq $t2, %increment, L2    #check if i or d was entered
+	%bodyMacroName () #Call thew body macro
+	add %regIterator, %regIterator,  %interval # Add %interval to %regIterator
+	ble %regIterator, %to, Loop # Branch to loop if %regIterator is less than or equal to %to
+	# print_str "\n" 
+	j end_macro # Jump to end of the macro
+	 
+	 
+	 L2:
+	%bodyMacroName ()
+	sub %regIterator, %regIterator,  %interval # decremnets the values
+	bge %regIterator, %to, L2 # checks if the value in t0 is greater than that in %to
+	# print_str "\n"
+	j end_macro # Jump to the end of the macro
+	
+	end_macro:
+	.end_macro
+	
+	#print an integer
+	.macro body() 
+	print_int $t0 # Call the print_int macro with the value in $t0
+
+	.end_macro # End the macro
+	
+	#printing values for incrment and decrement
+	for ($t0, 15, 450, 'i', 5, body)
+	 print_str "\n"
+        for ($t0, 100, 0, 'd', 10, body)
+
