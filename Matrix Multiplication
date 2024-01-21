@@ -1,0 +1,115 @@
+.data
+x: .double 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+y: .double 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+z: .double 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+
+.asciiz
+prompt1: "Put a number for loop the y"
+prompt2: "Put a number for loop the z"
+newline: "\n"
+space: " "
+
+.text
+Main:
+li $v0, 4
+la $a0, prompt1 # asks the user for the input prompt
+syscall
+
+la $a1, y # loading the address of the y
+li $t0, 0 # start of the counter
+li $t1, 16 #stopping the condition
+
+Y_LOOP:
+
+li $v0, 7 # reads the input to $f0
+syscall
+
+s.d $f0, ($a1) # loaded word $f0 into $a1
+addi $a1, $a1, 8 # increases the address of a1
+add $t0, $t0, 1 # ADD on TO the counter
+bne $t0, $t1, Y_LOOP # Y_LOOP compare, then loop
+
+li $v0, 4
+la $a0, prompt2 # asks user for the input
+syscall
+
+la $a2, z # loading the address of the y
+li $t2, 0 # start of counter
+
+Z_LOOP:
+
+li $v0, 7 # reads the input to $f0
+syscall
+
+s.d $f0, ($a2) # loaded word $f0 into $a1
+addi $a2, $a2, 8 # grow the address of a1
+add $t2, $t2, 1 # ADD one TO the counter
+bne  $t2, $t1, Z_LOOP # Z_LOOP compare, then loop
+
+la $a2, z # loading address with the z again
+la $a1, y # loading address with the y again
+la $a0, x # loading address with the x
+
+LOOP:
+
+li   $t1, 4  # $t1 = 32 (row size/loop end)  
+li   $s0, 0   # i = 0; put 1st for loop
+L1: li   $s1, 0  # j = 0; redo 2nd for loop
+L2: li   $s2, 0   # k = 0; redo 3rd for loop  
+sll  $t2, $s0, 2   # $t2 = i * 32 (size of row of x)  
+addu $t2, $t2, $s1 # $t2 = i * size(row) + j    
+sll  $t2, $t2, 3   # $t2 = byte offset of [i][j]
+addu $t2, $a0, $t2 # $t2 = byte address of x[i][j]  .
+l.d  $f4, 0($t2)   # $f4 = 8 bytes of x[i][j]
+L3: sll  $t0, $s2, 2   # $t0 = k * 32 (size of row of z)  
+addu $t0, $t0, $s1 # $t0 = k * size(row) + j  
+sll  $t0, $t0, 3   # $t0 = byte offset of [k][j]
+addu $t0, $a2, $t0 # $t0 = byte address of z[k][j]   .
+l.d  $f16, 0($t0)  # $f16 = 8 bytes of z[k][j]  
+sll  $t0, $s0, 2     # $t0 = i*32 (size of row of y)  
+addu  $t0, $t0, $s2    # $t0 = i*size(row) + k  
+sll   $t0, $t0, 3    # $t0 = byte offset of [i][k]  
+addu  $t0, $a1, $t0    # $t0 = byte address of y[i][k]  .
+l.d   $f18, 0($t0)   # $f18 = 8 bytes of y[i][k]  
+mul.d $f16, $f18, $f16 # $f16 = y[i][k] * z[k][j]  
+add.d $f4, $f4, $f16   # f4=x[i][j] + y[i][k]*z[k][j]  
+addiu $s2, $s2, 1      # $k k + 1
+bne   $s2, $t1, L3     # if (k != 32) go to L3  
+s.d   $f4, 0($t2)      # x[i][j] = $f4    
+addiu $s1, $s1, 1      # $j = j + 1  
+bne   $s1, $t1, L2     # if (j != 32) go to L2
+addiu $s0, $s0, 1      # $i = i + 1  
+bne   $s0, $t1, L1     # if (i != 32) go to L1
+
+la $a1, x
+li $t5, 4 # the new line condition
+li $t1, 16 # the exit condition
+li $t2, 0 # the exit counter
+li $t0, 0 # the new line counter
+
+PRINT1:
+
+l.d $f12, ($a1) # loaded word of $f12 into $a0
+li $v0, 3 # prints the number
+syscall
+li $v0, 4
+la $a0, space
+syscall
+
+addi $a1, $a1, 8 # increases the address of a0
+add $t0, $t0, 1 # ADD one TO the counter
+add $t2, $t2, 1 # ADD one TO the exit counter
+beq $t2, $t1, exit
+beq $t0, $t5, PRINT2 # PRINT2 to compare, then loop
+j PRINT1
+PRINT2:
+li $v0, 4
+la $a0, newline
+syscall
+li $t0, 0 # the new line counter
+j PRINT1
+
+exit:
+
+li $v0, 10
+syscall
