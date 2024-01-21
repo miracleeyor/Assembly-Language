@@ -1,0 +1,72 @@
+# Define a macro called "print_str" that takes one argument (%str).
+.macro print_str (%str)
+    # Define a string in the data section with the provided argument.
+    .data
+    myLabel: .asciiz %str
+    # Switch to the text section.
+    .text
+    # Load the appropriate system call number into register $v0.
+    li $v0, 4
+    # Load the address of the string into register $a0.
+    la $a0, myLabel
+    # Make the system call to print the string.
+    syscall
+    # End the macro definition.
+    .end_macro
+
+# Call the "print_str" macro with the argument "Here is the output:"
+print_str ("Here is the output:")
+
+
+# Define a macro called "print_int" that takes one argument (%x).
+ .macro print_int (%x)
+     # Define a string in the data section containing a single space.
+     .data
+     space:     .asciiz     " "	
+     # Switch to the text section.
+     .text
+     # Load the appropriate system call number into register $v0.
+     li $v0, 1
+     # Copy the value of the provided argument into register $a0.
+     add $a0, $zero, %x	
+     # Make the system call to print the integer in $a0.
+     syscall
+     # Load the appropriate system call number into register $v0.
+     li $v0, 4
+     # Load the address of the space string into register $a0.
+     la $a0, space
+     # Make the system call to print a space character.
+     syscall
+     # End the macro definition.
+     .end_macro
+
+
+# This macro loops from %from to %to in increments of %interval, calling %bodyMacroName each iteration.
+.macro for (%regIterator, %from, %to,  %interval, %bodyMacroName)
+    # Initialize %regIterator to %from.
+    add %regIterator, $zero, %from
+    # Define a label for the beginning of the loop.
+    Loop:
+    # Call the macro specified by %bodyMacroName.
+    %bodyMacroName ()
+    # Increment %regIterator by %interval.
+    add %regIterator, %regIterator,  %interval
+    # If %regIterator is less than or equal to %to, jump back to the beginning of the loop.
+    ble %regIterator, %to, Loop
+    # Call the "print_str" macro with the argument "\n" to print a newline character.
+    print_str "\n"
+    # End the macro definition.
+    .end_macro
+
+# Define a macro called "body" that takes no arguments.
+# This macro calls the "print_int" macro with the value in register $t0.
+.macro body()
+    print_int $t0
+    # End the macro definition.
+    .end_macro
+
+# Call the "for" macro with the arguments:
+# $t0 as the loop counter,
+# 10 as the initial value of the loop counter,
+# 40 as the final value of the loop counter,
+# 4 as the interval between
